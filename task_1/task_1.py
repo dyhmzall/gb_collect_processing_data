@@ -14,7 +14,13 @@
 from bs4 import BeautifulSoup as bs
 import requests
 
-url = 'https://hh.ru/search/vacancy?area=&fromSearchLine=true&st=searchVacancy&text=php'
+#text = input('Введите должность: ')
+#count = int(input('Введите количество просматриваемых страниц: '))
+
+text = 'php'
+count = 1
+
+url = f'https://hh.ru/search/vacancy?area=&fromSearchLine=true&st=searchVacancy&text={text}'
 # https://bryansk.hh.ru/search/vacancy?area=&fromSearchLine=true&st=searchVacancy&text=php&page=1
 # https://bryansk.hh.ru/search/vacancy?area=&fromSearchLine=true&st=searchVacancy&text=php&page=2
 
@@ -27,13 +33,16 @@ response = requests.get(url, headers=headers).text
 
 soup = bs(response, 'html.parser')
 
-items = soup.find_all(attrs={'data-qa' : 'vacancy-serp__vacancy-title'})
+items = soup.find_all(attrs={'data-qa': 'vacancy-serp__vacancy-title'})
 
 result = []
 
 for item in items:
+
     result.append({
-        'name':item.text
+        'name': item.text,
+        'url': item['href'],
+        'zp': item.parent.parent.parent.parent.next_sibling.contents[0].contents[0].string
     })
 
 print(result)
