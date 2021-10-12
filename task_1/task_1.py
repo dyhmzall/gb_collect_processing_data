@@ -11,38 +11,48 @@
 Можно выполнить по желанию один любой вариант или оба при желании и возможности.
 """
 
+import json
 from bs4 import BeautifulSoup as bs
 import requests
 
-#text = input('Введите должность: ')
-#count = int(input('Введите количество просматриваемых страниц: '))
+text = input('Введите должность: ')
+count = int(input('Введите количество просматриваемых страниц: '))
 
-text = 'php'
-count = 1
-
-url = f'https://hh.ru/search/vacancy?area=&fromSearchLine=true&st=searchVacancy&text={text}'
-# https://bryansk.hh.ru/search/vacancy?area=&fromSearchLine=true&st=searchVacancy&text=php&page=1
-# https://bryansk.hh.ru/search/vacancy?area=&fromSearchLine=true&st=searchVacancy&text=php&page=2
+base_url = f'https://hh.ru/search/vacancy?area=&fromSearchLine=true&st=searchVacancy&text={text}'
 
 # добавим заголовок, чтобы обмануть hh
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Safari/605.1.15'
 }
 
-response = requests.get(url, headers=headers).text
-
-soup = bs(response, 'html.parser')
-
-items = soup.find_all(attrs={'data-qa': 'vacancy-serp__vacancy-title'})
-
 result = []
 
-for item in items:
+for i in range(0, count):
+    url = f'{base_url}&page={i}'
+    response = requests.get(url, headers=headers).text
 
-    result.append({
-        'name': item.text,
-        'url': item['href'],
-        'zp': item.parent.parent.parent.parent.next_sibling.contents[0].contents[0].string
-    })
+    soup = bs(response, 'html.parser')
+    items = soup.find_all(attrs={'data-qa': 'vacancy-serp__vacancy-title'})
 
-print(result)
+    for item in items:
+
+        if item.parent.parent.parent.parent.next_sibling is not None:
+            salary = item.parent.parent.parent.parent.next_sibling.contents[0].contents[0].string
+        else:
+            salary = 'После собеседования'
+
+        result.append({
+            'title': item.text,
+            'url': item['href'],
+            'salary': salary
+        })
+
+# сохраним для дальнейшего анализа
+with open(f'hh.ru.{text}.json', 'w', encoding='utf-8') as f:
+    json.dump(result, f)
+
+# вывод
+for i, item in enumerate(result):
+    print(i + 1, ') ', item['title'], item['salary'], item['url'])
+
+# для примера получены вакансии по запросу "php" и "python"
