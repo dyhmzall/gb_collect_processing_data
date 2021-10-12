@@ -14,11 +14,12 @@
 import json
 from bs4 import BeautifulSoup as bs
 import requests
+import re
 
 SOURCE = 'hh.ru'
 
-text = input('Введите должность: ')
-count = int(input('Введите количество просматриваемых страниц: '))
+text = 'php'  # input('Введите должность: ')
+count = 1  # int(input('Введите количество просматриваемых страниц: '))
 
 base_url = f'https://hh.ru/search/vacancy?area=&fromSearchLine=true&st=searchVacancy&text={text}'
 
@@ -38,15 +39,30 @@ for i in range(0, count):
 
     for item in items:
 
+        salary_from = ''
+        salary_to = ''
+
         if item.parent.parent.parent.parent.next_sibling is not None:
-            salary = item.parent.parent.parent.parent.next_sibling.contents[0].contents[0].string
-        else:
-            salary = 'После собеседования'
+
+            if item.parent.parent.parent.parent.next_sibling.contents[0].contents[0] == 'до ':
+                salary_to = item.parent.parent.parent.parent.next_sibling.contents[0].contents[2]
+                salary_to = re.sub('[^\d|\–]', '', salary_to)
+            elif item.parent.parent.parent.parent.next_sibling.contents[0].contents[0] == 'от ':
+                salary_from = item.parent.parent.parent.parent.next_sibling.contents[0].contents[2]
+                salary_from = re.sub('[^\d|\–]', '', salary_from)
+            else:
+                salary = item.parent.parent.parent.parent.next_sibling.contents[0].contents[0].string
+                salary = re.sub('[^\d|\–]', '', salary)
+                salary_array = salary.split('–')
+                if len(salary_array) == 2:
+                    salary_from = salary_array[0]
+                    salary_to = salary_array[1]
 
         result.append({
             'title': item.text,
             'url': item['href'],
-            'salary': salary,
+            'salary_from': salary_from,
+            'salary_to': salary_to,
             'source': SOURCE
         })
 
@@ -56,6 +72,7 @@ with open(f'hh.ru.{text}.json', 'w', encoding='utf-8') as f:
 
 # вывод
 for i, item in enumerate(result):
-    print(i + 1, ') ', item['title'], item['salary'], item['url'])
+    print(i + 1, ') ', item['title'], item['salary_from'], '-', item['salary_to'], item['url'])
 
 # для примера получены вакансии по запросу "php" и "python"
+# не учтены зарплаты в usd
