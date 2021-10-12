@@ -15,6 +15,8 @@ import json
 from bs4 import BeautifulSoup as bs
 import requests
 
+SOURCE = 'hh.ru'
+
 text = input('Введите должность: ')
 count = int(input('Введите количество просматриваемых страниц: '))
 
@@ -44,7 +46,8 @@ for i in range(0, count):
         result.append({
             'title': item.text,
             'url': item['href'],
-            'salary': salary
+            'salary': salary,
+            'source': SOURCE
         })
 
 # сохраним для дальнейшего анализа
