@@ -18,6 +18,9 @@ class HHParser:
         return f'{self.BASE_URL}&text={self.search_text}&page={page_number}'
 
     def run(self):
+
+        vacancies_params = []
+
         for page_number in range(0, self.page_count):
 
             response = self.get_response(page_number)
@@ -25,14 +28,12 @@ class HHParser:
             soup = BeautifulSoup(response, 'html.parser')
             vacancies = soup.find_all(attrs={'data-qa': 'vacancy-serp__vacancy-title'})
 
-            vacancies_params = []
-
             for vacancy in vacancies:
                 vacancies_params.append(
                     self.get_vacancy_params(vacancy)
                 )
 
-            return vacancies_params
+        return vacancies_params
 
     def get_response(self, page_number):
         return requests.get(
@@ -41,8 +42,8 @@ class HHParser:
         ).text
 
     def get_vacancy_params(self, vacancy):
-        salary_from = ''
-        salary_to = ''
+        salary_from = 0
+        salary_to = 0
 
         if vacancy.parent.parent.parent.parent.next_sibling is not None:
 
@@ -63,7 +64,8 @@ class HHParser:
         return {
             'title': vacancy.text,
             'url': vacancy['href'],
-            'salary_from': salary_from,
-            'salary_to': salary_to,
-            'source': self.SOURCE
+            'salary_from': int(salary_from),
+            'salary_to': int(salary_to),
+            'source': self.SOURCE,
+            'search_text': self.search_text
         }
